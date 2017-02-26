@@ -62,7 +62,6 @@ module Test.HUnit.DejaFu
 import Control.Monad.Catch (try)
 import Control.Monad.ST (runST)
 import Data.List (intercalate, intersperse)
-import System.Random (RandomGen)
 import Test.HUnit (Assertable(..), Test(..), Testable(..), assertString)
 import Test.HUnit.Lang (HUnitFailure(..))
 import Test.DejaFu
@@ -73,10 +72,10 @@ import qualified Test.DejaFu.SCT as SCT
 -- instance :(
 import Unsafe.Coerce (unsafeCoerce)
 
-runSCTst :: RandomGen g => Way g -> MemType -> (forall t. Conc.ConcST t a) -> [(Either Failure a, Conc.Trace)]
+runSCTst :: Way -> MemType -> (forall t. Conc.ConcST t a) -> [(Either Failure a, Conc.Trace)]
 runSCTst way memtype conc = runST (SCT.runSCT way memtype conc)
 
-runSCTio :: RandomGen g => Way g -> MemType -> Conc.ConcIO a -> IO [(Either Failure a, Conc.Trace)]
+runSCTio :: Way -> MemType -> Conc.ConcIO a -> IO [(Either Failure a, Conc.Trace)]
 runSCTio = SCT.runSCT
 
 --------------------------------------------------------------------------------
@@ -127,8 +126,8 @@ testAuto = testAutoWay defaultWay defaultMemType
 
 -- | Variant of 'testAuto' which tests a computation under a given
 -- execution way and memory model.
-testAutoWay :: (Eq a, Show a, RandomGen g)
-  => Way g
+testAutoWay :: (Eq a, Show a)
+  => Way
   -- ^ How to execute the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -143,8 +142,8 @@ testAutoIO :: (Eq a, Show a) => Conc.ConcIO a -> Test
 testAutoIO = testAutoWayIO defaultWay defaultMemType
 
 -- | Variant of 'testAutoWay' for computations which do 'IO'.
-testAutoWayIO :: (Eq a, Show a, RandomGen g)
-  => Way g -> MemType -> Conc.ConcIO a -> Test
+testAutoWayIO :: (Eq a, Show a)
+  => Way -> MemType -> Conc.ConcIO a -> Test
 testAutoWayIO way memtype concio =
   testDejafusWayIO way memtype concio autocheckCases
 
@@ -169,8 +168,8 @@ testDejafu = testDejafuWay defaultWay defaultMemType
 
 -- | Variant of 'testDejafu' which takes a way to execute the program
 -- and a memory model.
-testDejafuWay :: (Show a, RandomGen g)
-  => Way g
+testDejafuWay :: Show a
+  => Way
   -- ^ How to execute the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -197,8 +196,8 @@ testDejafus = testDejafusWay defaultWay defaultMemType
 
 -- | Variant of 'testDejafus' which takes a way to execute the program
 -- and a memory model.
-testDejafusWay :: (Show a, RandomGen g)
-  => Way g
+testDejafusWay :: Show a
+  => Way
   -- ^ How to execute the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -214,8 +213,8 @@ testDejafuIO :: Show a => Conc.ConcIO a -> String -> Predicate a -> Test
 testDejafuIO = testDejafuWayIO defaultWay defaultMemType
 
 -- | Variant of 'testDejafuWay' for computations which do 'IO'.
-testDejafuWayIO :: (Show a, RandomGen g)
-  => Way g -> MemType -> Conc.ConcIO a -> String -> Predicate a -> Test
+testDejafuWayIO :: Show a
+  => Way -> MemType -> Conc.ConcIO a -> String -> Predicate a -> Test
 testDejafuWayIO way memtype concio name p =
   testDejafusWayIO way memtype concio [(name, p)]
 
@@ -224,16 +223,16 @@ testDejafusIO :: Show a => Conc.ConcIO a -> [(String, Predicate a)] -> Test
 testDejafusIO = testDejafusWayIO defaultWay defaultMemType
 
 -- | Variant of 'dejafusWay' for computations which do 'IO'.
-testDejafusWayIO :: (Show a, RandomGen g)
-  => Way g -> MemType -> Conc.ConcIO a -> [(String, Predicate a)] -> Test
+testDejafusWayIO :: Show a
+  => Way -> MemType -> Conc.ConcIO a -> [(String, Predicate a)] -> Test
 testDejafusWayIO = testio
 
 --------------------------------------------------------------------------------
 -- HUnit integration
 
 -- | Produce a HUnit 'Test' from a Deja Fu test.
-testst :: (Show a, RandomGen g)
-  => Way g -> MemType -> (forall t. Conc.ConcST t a) -> [(String, Predicate a)] -> Test
+testst :: Show a
+  => Way -> MemType -> (forall t. Conc.ConcST t a) -> [(String, Predicate a)] -> Test
 testst way memtype conc tests = case map toTest tests of
   [t] -> t
   ts  -> TestList ts
@@ -245,8 +244,8 @@ testst way memtype conc tests = case map toTest tests of
     traces = runSCTst way memtype conc
 
 -- | Produce a HUnit 'Test' from an IO-using Deja Fu test.
-testio :: (Show a, RandomGen g)
-  => Way g -> MemType -> Conc.ConcIO a -> [(String, Predicate a)] -> Test
+testio :: Show a
+  => Way -> MemType -> Conc.ConcIO a -> [(String, Predicate a)] -> Test
 testio way memtype concio tests = case map toTest tests of
   [t] -> t
   ts  -> TestList ts

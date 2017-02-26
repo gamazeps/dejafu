@@ -250,7 +250,6 @@ import Control.Monad.ST (runST)
 import Data.Function (on)
 import Data.List (intercalate, intersperse, minimumBy)
 import Data.Ord (comparing)
-import System.Random (RandomGen, StdGen)
 
 import Test.DejaFu.Common
 import Test.DejaFu.Conc
@@ -285,8 +284,8 @@ autocheck = autocheckWay defaultWay defaultMemType
 --
 -- __Warning:__ Using largers bounds will almost certainly
 -- significantly increase the time taken to test!
-autocheckWay :: (Eq a, Show a, RandomGen g)
-  => Way g
+autocheckWay :: (Eq a, Show a)
+  => Way
   -- ^ How to run the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -301,7 +300,7 @@ autocheckIO :: (Eq a, Show a) => ConcIO a -> IO Bool
 autocheckIO = autocheckWayIO defaultWay defaultMemType
 
 -- | Variant of 'autocheckWay' for computations which do 'IO'.
-autocheckWayIO :: (Eq a, Show a, RandomGen g) => Way g -> MemType -> ConcIO a -> IO Bool
+autocheckWayIO :: (Eq a, Show a) => Way -> MemType -> ConcIO a -> IO Bool
 autocheckWayIO way memtype concio =
   dejafusWayIO way memtype concio autocheckCases
 
@@ -325,8 +324,8 @@ dejafu = dejafuWay defaultWay defaultMemType
 
 -- | Variant of 'dejafu' which takes a way to run the program and a
 -- memory model.
-dejafuWay :: (Show a, RandomGen g)
-  => Way g
+dejafuWay :: Show a
+  => Way
   -- ^ How to run the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -349,8 +348,8 @@ dejafus = dejafusWay defaultWay defaultMemType
 
 -- | Variant of 'dejafus' which takes a way to run the program and a
 -- memory model.
-dejafusWay :: (Show a, RandomGen g)
-  => Way g
+dejafusWay :: Show a
+  => Way
   -- ^ How to run the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -369,7 +368,7 @@ dejafuIO :: Show a => ConcIO a -> (String, Predicate a) -> IO Bool
 dejafuIO = dejafuWayIO defaultWay defaultMemType
 
 -- | Variant of 'dejafuWay' for computations which do 'IO'.
-dejafuWayIO :: (Show a, RandomGen g) => Way g -> MemType -> ConcIO a -> (String, Predicate a) -> IO Bool
+dejafuWayIO :: Show a => Way -> MemType -> ConcIO a -> (String, Predicate a) -> IO Bool
 dejafuWayIO way memtype concio test =
   dejafusWayIO way memtype concio [test]
 
@@ -378,7 +377,7 @@ dejafusIO :: Show a => ConcIO a -> [(String, Predicate a)] -> IO Bool
 dejafusIO = dejafusWayIO defaultWay defaultMemType
 
 -- | Variant of 'dejafusWay' for computations which do 'IO'.
-dejafusWayIO :: (Show a, RandomGen g) => Way g -> MemType -> ConcIO a -> [(String, Predicate a)] -> IO Bool
+dejafusWayIO :: Show a => Way -> MemType -> ConcIO a -> [(String, Predicate a)] -> IO Bool
 dejafusWayIO way memtype concio tests = do
   traces  <- runSCT way memtype concio
   results <- mapM (\(name, test) -> doTest name $ test traces) tests
@@ -435,8 +434,8 @@ runTest test conc =
 
 -- | Variant of 'runTest' which takes a way to run the program and a
 -- memory model.
-runTestWay :: RandomGen g
-  => Way g
+runTestWay
+  :: Way
   -- ^ How to run the concurrent program.
   -> MemType
   -- ^ The memory model to use for non-synchronised @CRef@ operations.
@@ -454,8 +453,8 @@ runTestM :: MonadRef r n
 runTestM = runTestWayM defaultWay defaultMemType
 
 -- | Monad-polymorphic variant of 'runTest''.
-runTestWayM :: (MonadRef r n, RandomGen g)
-            => Way g -> MemType -> Predicate a -> Conc n r a -> n (Result a)
+runTestWayM :: MonadRef r n
+            => Way -> MemType -> Predicate a -> Conc n r a -> n (Result a)
 runTestWayM way memtype predicate conc =
   predicate <$> runSCT way memtype conc
 
@@ -624,10 +623,7 @@ gives' = gives . map Right
 
 -- | A default way to execute concurrent programs: systematically
 -- using 'defaultBounds'.
---
--- The type parameter is constrained to 'StdGen', even though it is
--- unused, to avoid ambiguity errors.
-defaultWay :: Way StdGen
+defaultWay :: Way
 defaultWay = Systematically defaultBounds
 
 -- | The default memory model: @TotalStoreOrder@
