@@ -13,7 +13,7 @@ import Test.HUnit.DejaFu (testDejafuWay)
 
 import Control.Concurrent.Classy
 import Control.Monad.STM.Class
-import Test.DejaFu.Conc (Conc, ConcST, subconcurrency)
+import Test.DejaFu.Conc (ConcT, ConcST, subconcurrency)
 
 data T where
   T :: Show a => String -> (forall t. ConcST t a) -> Predicate a -> T
@@ -223,7 +223,7 @@ schedDaemon = do
 -- Subconcurrency
 
 -- | Subcomputation deadlocks sometimes.
-scDeadlock1 :: Monad n => Conc n r (Either Failure ())
+scDeadlock1 :: Monad n => ConcT r n (Either Failure ())
 scDeadlock1 = do
   var <- newEmptyMVar
   subconcurrency $ do
@@ -232,7 +232,7 @@ scDeadlock1 = do
 
 -- | Subcomputation deadlocks sometimes, and action after it still
 -- happens.
-scDeadlock2 :: Monad n => Conc n r (Either Failure (), ())
+scDeadlock2 :: Monad n => ConcT r n (Either Failure (), ())
 scDeadlock2 = do
   var <- newEmptyMVar
   res <- subconcurrency $ do
@@ -241,7 +241,7 @@ scDeadlock2 = do
   (,) <$> pure res <*> readMVar var
 
 -- | Subcomputation successfully completes.
-scSuccess :: Monad n => Conc n r (Either Failure ())
+scSuccess :: Monad n => ConcT r n (Either Failure ())
 scSuccess = do
   var <- newMVar ()
   subconcurrency $ do
@@ -250,7 +250,7 @@ scSuccess = do
     takeMVar out
 
 -- | Illegal usage
-scIllegal :: Monad n => Conc n r ()
+scIllegal :: Monad n => ConcT r n ()
 scIllegal = do
   var <- newEmptyMVar
   void . fork $ readMVar var
@@ -258,7 +258,7 @@ scIllegal = do
 
 -- | Test case from issue 71. This won't fail if the bug is
 -- reintroduced, it will just hang.
-scIssue71 :: Monad n => Conc n r ()
+scIssue71 :: Monad n => ConcT r n ()
 scIssue71 = do
   let ma ||| mb = do { j1 <- spawn ma; j2 <- spawn mb; takeMVar j1; takeMVar j2; pure () }
   s <- newEmptyMVar
